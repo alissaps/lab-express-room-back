@@ -50,27 +50,23 @@ router.post("/signup", async (req, res) => {
 
 router.post("/login", async (req, res) => {
   try {
-    // Extrair os dados do corpo da requisição
-
+    
     const { email, password } = req.body;
-
-    // Procurar o usuário no banco de dados através do email
 
     const foundUser = await UserModel.findOne({ email });
 
     console.log(`found user ${foundUser}`)
 
-    // Caso encontrado, verificar se a senha está correta
-
     if (!foundUser) {
       return res.status(400).json({ msg: "E-mail ou senha incorretos." });
     }
 
+    // Essa função retorna true or false
     if (!bcrypt.compareSync(password, foundUser.passwordHash)) {
       return res.status(400).json({ msg: "E-mail ou senha incorretos." });
     }
 
-    // Caso correta, criar uma sessão para esse usuário
+    // O token é a sessão do usuário
 
     const token = generateToken(foundUser);
 
@@ -83,12 +79,20 @@ router.post("/login", async (req, res) => {
 });
 
 // Perfil
+
+// Por conta do token, não precisa do /profile/:id
+
 router.get("/profile", isAuthenticated, async (req, res) => {
   try {
     // Buscar as informações do usuário no banco
-    const user = await UserModel.findOne({ _id: req.user._id }).populate({
-      path: "orders",
-      model: "Order",
+    const user = await UserModel.findOne({ _id: req.user._id })
+    .populate({
+      path: "reviews",
+      model: "Review",
+    })
+    .populate({
+      path: "rooms",
+      model: "Room",
     });
 
     // Responder a requisição
